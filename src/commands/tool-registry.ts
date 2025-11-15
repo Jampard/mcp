@@ -98,20 +98,38 @@ export function registerDocTool(server: McpServer, vendureDocsService: VendureDo
         'vendure_get_docs',
         {
             description:
-                'Retrieves Vendure documentation with pagination support. Call without section/page parameters to get table of contents. Use "section" for specific sections or "page" for numeric pagination.',
+                'Retrieves Vendure documentation with pagination support to avoid token limits.\n\n' +
+                'IMPORTANT: DO NOT use type parameter alone - it will exceed token limits!\n\n' +
+                'REQUIRED WORKFLOW:\n' +
+                '1. FIRST CALL - Get table of contents: { "type": "standard" }\n' +
+                '   Returns list of all available sections\n\n' +
+                '2. SECOND CALL - Fetch by section or page:\n' +
+                '   - By section: { "type": "standard", "section": "<name from TOC>" }\n' +
+                '   - By page: { "type": "standard", "page": 1, "pageSize": 100 }\n\n' +
+                'TIPS:\n' +
+                '- Section names from TOC work with partial, case-insensitive matching\n' +
+                '- Use pageSize: 100-200 for best results (default 5000 may be too large)\n' +
+                '- Standard docs: ~800 lines total, Full docs: much larger',
             inputSchema: {
                 type: docTypeEnum,
                 section: z
                     .string()
                     .optional()
                     .describe(
-                        'Specific section title to retrieve (case-insensitive, partial match supported)',
+                        'Section title from TOC (supports partial, case-insensitive matching). MUST call without params first to see available sections!',
                     ),
-                page: z.number().optional().describe('Page number for numeric pagination (starts at 1)'),
+                page: z
+                    .number()
+                    .optional()
+                    .describe(
+                        'Page number (starts at 1). Use for sequential browsing or when sections are large',
+                    ),
                 pageSize: z
                     .number()
                     .optional()
-                    .describe('Lines per page for numeric pagination (default: 5000)'),
+                    .describe(
+                        'Lines per page (default: 5000). RECOMMENDED: Use 100-200 for manageable token usage',
+                    ),
             },
         },
         async ({
