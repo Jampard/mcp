@@ -7,8 +7,8 @@ export function registerResources(server: McpServer, vendureDocsService: Vendure
         'vendure-llms-txt',
         'vendure://llms.txt',
         {
-            name: 'Vendure Documentation Overview',
-            description: 'Structured overview of Vendure concepts and documentation links for AI context',
+            description:
+                'Vendure Documentation Overview - Structured overview of Vendure concepts and documentation links for AI context',
             mimeType: 'text/plain',
         },
         async (uri: URL) => {
@@ -29,8 +29,8 @@ export function registerResources(server: McpServer, vendureDocsService: Vendure
         'vendure-llms-full-txt',
         'vendure://llms-full.txt',
         {
-            name: 'Comprehensive Vendure Documentation',
-            description: 'Complete Vendure documentation and API reference for detailed context',
+            description:
+                'Comprehensive Vendure Documentation - Complete Vendure documentation and API reference for detailed context',
             mimeType: 'text/plain',
         },
         async (uri: URL) => {

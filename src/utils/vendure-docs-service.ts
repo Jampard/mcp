@@ -8,6 +8,25 @@ interface CachedContent {
     timestamp: number;
 }
 
+interface Section {
+    title: string;
+    level: number;
+    content: string;
+    startLine: number;
+    endLine: number;
+}
+
+interface PaginationResult {
+    content: string;
+    metadata: {
+        totalSections?: number;
+        currentSection?: string;
+        totalPages?: number;
+        currentPage?: number;
+        pageSize?: number;
+    };
+}
+
 export class VendureDocsService {
     private static readonly VENDURE_DOCS_BASE_URL = 'https://docs.vendure.io';
     private static readonly CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -22,6 +41,171 @@ export class VendureDocsService {
 
     async getLlmsFullTxt(): Promise<string> {
         return this.getDocumentContent('llms-full.txt', 'full');
+    }
+
+    /**
+     * Get paginated documentation content
+     * @param type - Documentation type ('full' or 'standard')
+     * @param options - Pagination options
+     * @returns Paginated content with metadata
+     */
+    async getPaginatedDocs(
+        type: 'full' | 'standard',
+        options?: {
+            section?: string;
+            page?: number;
+            pageSize?: number;
+        },
+    ): Promise<PaginationResult> {
+        const fullContent = type === 'full' ? await this.getLlmsFullTxt() : await this.getLlmsTxt();
+
+        // If no pagination options, return table of contents
+        if (!options?.section && !options?.page) {
+            return this.getTableOfContents(fullContent);
+        }
+
+        // Section-based pagination
+        if (options.section) {
+            return this.getSection(fullContent, options.section);
+        }
+
+        // Numeric pagination
+        if (options.page !== undefined) {
+            return this.getPage(fullContent, options.page, options.pageSize || 5000);
+        }
+
+        // Fallback to full content (shouldn't reach here)
+        return {
+            content: fullContent,
+            metadata: {},
+        };
+    }
+
+    /**
+     * Parse markdown content into sections
+     */
+    private parseSections(content: string): Section[] {
+        const lines = content.split('\n');
+        const sections: Section[] = [];
+        let currentSection: Section | undefined;
+
+        for (let index = 0; index < lines.length; index++) {
+            const line = lines[index];
+            const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+
+            if (headerMatch) {
+                // Save previous section
+                if (currentSection !== undefined) {
+                    currentSection.endLine = index - 1;
+                    sections.push(currentSection);
+                }
+
+                // Start new section
+                currentSection = {
+                    title: headerMatch[2].trim(),
+                    level: headerMatch[1].length,
+                    content: line + '\n',
+                    startLine: index,
+                    endLine: index,
+                };
+            } else if (currentSection !== undefined) {
+                currentSection.content += line + '\n';
+            }
+        }
+
+        // Save last section
+        if (currentSection !== undefined) {
+            currentSection.endLine = lines.length - 1;
+            sections.push(currentSection);
+        }
+
+        return sections;
+    }
+
+    /**
+     * Get table of contents
+     */
+    private getTableOfContents(content: string): PaginationResult {
+        const sections = this.parseSections(content);
+
+        let toc = '# Vendure Documentation - Table of Contents\n\n';
+        toc += 'Use the `section` parameter to retrieve specific sections.\n\n';
+        toc += '## Available Sections\n\n';
+
+        sections.forEach((section, index) => {
+            const indent = '  '.repeat(section.level - 1);
+            toc += `${indent}${index + 1}. ${section.title}\n`;
+        });
+
+        toc += '\n## Usage Examples\n\n';
+        toc += '- Get specific section: `{ "type": "standard", "section": "Core Concepts" }`\n';
+        toc += '- Get page 1: `{ "type": "standard", "page": 1, "pageSize": 5000 }`\n';
+
+        return {
+            content: toc,
+            metadata: {
+                totalSections: sections.length,
+            },
+        };
+    }
+
+    /**
+     * Get a specific section by title
+     */
+    private getSection(content: string, sectionTitle: string): PaginationResult {
+        const sections = this.parseSections(content);
+
+        // Find section (case-insensitive, partial match)
+        const section = sections.find(s => s.title.toLowerCase().includes(sectionTitle.toLowerCase()));
+
+        if (!section) {
+            const availableSections = sections.map(s => s.title).join('\n- ');
+            return {
+                content: `# Section Not Found\n\nCould not find section matching: "${sectionTitle}"\n\n## Available sections:\n- ${availableSections}`,
+                metadata: {
+                    totalSections: sections.length,
+                },
+            };
+        }
+
+        return {
+            content: section.content,
+            metadata: {
+                totalSections: sections.length,
+                currentSection: section.title,
+            },
+        };
+    }
+
+    /**
+     * Get a specific page with numeric pagination
+     */
+    private getPage(content: string, page: number, pageSize: number): PaginationResult {
+        const lines = content.split('\n');
+        const totalPages = Math.ceil(lines.length / pageSize);
+
+        if (page < 1 || page > totalPages) {
+            return {
+                content: `# Invalid Page\n\nPage ${page} is out of range. Total pages: ${totalPages}`,
+                metadata: {
+                    totalPages,
+                    pageSize,
+                },
+            };
+        }
+
+        const startLine = (page - 1) * pageSize;
+        const endLine = Math.min(startLine + pageSize, lines.length);
+        const pageContent = lines.slice(startLine, endLine).join('\n');
+
+        return {
+            content: pageContent,
+            metadata: {
+                totalPages,
+                currentPage: page,
+                pageSize,
+            },
+        };
     }
 
     private async getDocumentContent(filename: string, cacheType: 'llms' | 'full'): Promise<string> {

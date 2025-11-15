@@ -98,20 +98,63 @@ export function registerDocTool(server: McpServer, vendureDocsService: VendureDo
         'vendure_get_docs',
         {
             description:
-                'Retrieves Vendure documentation. Specify "full" for the complete version or "standard" for the overview.',
+                'Retrieves Vendure documentation with pagination support. Call without section/page parameters to get table of contents. Use "section" for specific sections or "page" for numeric pagination.',
             inputSchema: {
                 type: docTypeEnum,
+                section: z
+                    .string()
+                    .optional()
+                    .describe(
+                        'Specific section title to retrieve (case-insensitive, partial match supported)',
+                    ),
+                page: z.number().optional().describe('Page number for numeric pagination (starts at 1)'),
+                pageSize: z
+                    .number()
+                    .optional()
+                    .describe('Lines per page for numeric pagination (default: 5000)'),
             },
         },
-        async ({ type }: { type: 'full' | 'standard' }) => {
-            let content = '';
-            if (type === 'full') {
-                content = await vendureDocsService.getLlmsFullTxt();
-            } else {
-                content = await vendureDocsService.getLlmsTxt();
+        async ({
+            type,
+            section,
+            page,
+            pageSize,
+        }: {
+            type: 'full' | 'standard';
+            section?: string;
+            page?: number;
+            pageSize?: number;
+        }) => {
+            const result = await vendureDocsService.getPaginatedDocs(type, {
+                section,
+                page,
+                pageSize,
+            });
+
+            // Format response with metadata
+            let responseText = result.content;
+
+            if (Object.keys(result.metadata).length > 0) {
+                responseText += '\n\n---\n**Pagination Info:**\n';
+                if (result.metadata.totalSections) {
+                    responseText += `- Total sections: ${result.metadata.totalSections}\n`;
+                }
+                if (result.metadata.currentSection) {
+                    responseText += `- Current section: ${result.metadata.currentSection}\n`;
+                }
+                if (result.metadata.totalPages) {
+                    responseText += `- Total pages: ${result.metadata.totalPages}\n`;
+                }
+                if (result.metadata.currentPage) {
+                    responseText += `- Current page: ${result.metadata.currentPage}/${result.metadata.totalPages}\n`;
+                }
+                if (result.metadata.pageSize) {
+                    responseText += `- Page size: ${result.metadata.pageSize} lines\n`;
+                }
             }
+
             return {
-                content: [{ type: 'text' as const, text: content }],
+                content: [{ type: 'text' as const, text: responseText }],
             };
         },
     );
