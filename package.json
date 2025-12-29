@@ -1,91 +1,90 @@
 {
-    "name": "@vendure/mcp-server",
-    "version": "1.0.4-alpha",
-    "description": "The official Vendure MCP server",
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/vendure-ecommerce/mcp.git"
-    },
-    "keywords": [
-        "vendure",
-        "mcp",
-        "cli",
-        "orchestration",
-        "server"
+  "name": "@vendure/mcp-server",
+  "version": "1.0.4-alpha",
+  "description": "The official Vendure MCP server",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vendure-ecommerce/mcp.git"
+  },
+  "keywords": [
+    "vendure",
+    "mcp",
+    "cli",
+    "orchestration",
+    "server"
+  ],
+  "homepage": "https://github.com/vendure-ecommerce/mcp#readme",
+  "bugs": {
+    "url": "https://github.com/vendure-ecommerce/mcp/issues"
+  },
+  "private": false,
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/server.js",
+    "start:http": "node dist/server.js --transport http",
+    "dev": "tsx src/server.ts",
+    "dev:http": "tsx src/server.ts --transport http",
+    "lint": "eslint --fix src/**/*.ts",
+    "format": "prettier --write src/**/*.ts",
+    "prepare": "husky install",
+    "docker:build": "docker build -t vendure-mcp ."
+  },
+  "bin": {
+    "vendure-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "example-config.json"
+  ],
+  "dependencies": {
+    "@vendure/cli": "minor",
+    "dotenv": "^16.4.5",
+    "@modelcontextprotocol/sdk": "^1.13.3",
+    "express": "^4.21.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.1.0",
+    "@commitlint/config-conventional": "^19.1.0",
+    "@types/dotenv": "^8.2.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.41.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-import": "^2.32.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-organize-imports": "^4.1.0",
+    "rimraf": "^5.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
     ],
-    "homepage": "https://github.com/vendure-ecommerce/mcp#readme",
-    "bugs": {
-        "url": "https://github.com/vendure-ecommerce/mcp/issues"
-    },
-    "private": false,
-    "license": "MIT",
-    "type": "module",
-    "main": "dist/server.js",
-    "scripts": {
-        "build": "rimraf dist && tsc",
-        "watch": "tsc --watch",
-        "start": "node dist/server.js",
-        "start:http": "node dist/server.js --transport http",
-        "dev": "tsx src/server.ts",
-        "dev:http": "tsx src/server.ts --transport http",
-        "lint": "eslint --fix src/**/*.ts",
-        "format": "prettier --write src/**/*.ts",
-        "prepare": "husky install",
-        "docker:build": "docker build -t vendure-mcp ."
-    },
-    "bin": {
-        "vendure-mcp": "dist/server.js"
-    },
-    "files": [
-        "dist/**/*",
-        "README.md",
-        "example-config.json"
-    ],
-    "dependencies": {
-        "@vendure/cli": "minor",
-        "dotenv": "^16.4.5",
-        "@modelcontextprotocol/sdk": "^1.13.3",
-        "express": "^4.21.1",
-        "zod": "^3.23.8"
-    },
-    "devDependencies": {
-        "@commitlint/cli": "^19.1.0",
-        "@commitlint/config-conventional": "^19.1.0",
-        "@types/dotenv": "^8.2.0",
-        "@types/express": "^5.0.0",
-        "@types/node": "^20.0.0",
-        "@typescript-eslint/eslint-plugin": "^6.21.0",
-        "@typescript-eslint/parser": "^6.21.0",
-        "@vendure/cli": "minor",
-        "eslint": "^8.41.0",
-        "eslint-config-prettier": "^8.10.0",
-        "eslint-plugin-import": "^2.32.0",
-        "husky": "^8.0.3",
-        "lint-staged": "^15.2.0",
-        "prettier": "^3.2.5",
-        "prettier-plugin-organize-imports": "^4.1.0",
-        "rimraf": "^5.0.0",
-        "tsx": "^4.0.0",
-        "typescript": "^5.8.2"
-    },
-    "engines": {
-        "node": ">=18.0.0"
-    },
-    "commitlint": {
-        "extends": [
-            "@commitlint/config-conventional"
-        ],
-        "rules": {
-            "subject-case": [
-                2,
-                "always",
-                [
-                    "sentence-case"
-                ]
-            ]
-        }
+    "rules": {
+      "subject-case": [
+        2,
+        "always",
+        [
+          "sentence-case"
+        ]
+      ]
     }
+  }
 }

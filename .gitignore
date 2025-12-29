@@ -69,4 +69,4 @@ pnpm-lock.yaml
 *.bak
 
 # Error logs
-lerna-debug.log
+lerna-debug.logresult
